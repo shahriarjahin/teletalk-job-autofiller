@@ -1,0 +1,11 @@
+# User Private Profiles and Backups
+*profile*.json
+!profile_template.json
+*.private.*
+my_*.json
+private/
+
+# OS / Editor Files
+.DS_Store
+Thumbs.db
+*.log

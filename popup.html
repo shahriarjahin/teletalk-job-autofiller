@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Teletalk Job FastFiller</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="logo-box">
+      <div class="logo-icon">🇧🇩</div>
+      <div class="logo-text">
+        <h1>Teletalk Job FastFiller</h1>
+        <p>Govt Job Application Auto-Filler</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btnCapturePage" class="btn-secondary" title="Capture current page form values as profile">
+        📥 Capture Page
+      </button>
+      <button id="btnQuickFill" class="btn-primary" title="Fill application on active Teletalk tab">
+        ⚡ Fill Form (Alt+A)
+      </button>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" data-tab="personal">👤 Personal</button>
+    <button class="tab-btn" data-tab="address">🏠 Address</button>
+    <button class="tab-btn" data-tab="education">🎓 Education</button>
+    <button class="tab-btn" data-tab="experience">💼 Experience</button>
+    <button class="tab-btn" data-tab="settings">⚙️ Manage</button>
+  </div>
+
+  <div class="tab-content">
+    <!-- TAB 1: PERSONAL INFORMATION -->
+    <div id="tab-personal" class="tab-pane active">
+      <div class="section-title">Personal Details</div>
+      <div class="form-grid">
+        <div class="form-group col-12">
+          <label>Applicant's Name (English in Capital)*</label>
+          <input type="text" id="name" placeholder="e.g. MD. SHAHRIAR KABIR" style="text-transform: uppercase;">
+        </div>
+        <div class="form-group col-12">
+          <label>Applicant's Name (Bangla)*</label>
+          <input type="text" id="name_bn" placeholder="e.g. মো: শাহরিয়ার কবির">
+        </div>
+        <div class="form-group col-6">
+          <label>Father's Name (English)*</label>
+          <input type="text" id="father" placeholder="Father's Name" style="text-transform: uppercase;">
+        </div>
+        <div class="form-group col-6">
+          <label>Father's Name (Bangla)*</label>
+          <input type="text" id="father_bn" placeholder="পিতার নাম বাংলায়">
+        </div>
+        <div class="form-group col-6">
+          <label>Mother's Name (English)*</label>
+          <input type="text" id="mother" placeholder="Mother's Name" style="text-transform: uppercase;">
+        </div>
+        <div class="form-group col-6">
+          <label>Mother's Name (Bangla)*</label>
+          <input type="text" id="mother_bn" placeholder="মাতার নাম বাংলায়">
+        </div>
+        <div class="form-group col-6">
+          <label>Date of Birth*</label>
+          <input type="date" id="dob">
+        </div>
+        <div class="form-group col-6">
+          <label>Gender*</label>
+          <select id="gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+        <div class="form-group col-6">
+          <label>Religion*</label>
+          <select id="religion">
+            <option value="Islam">Islam</option>
+            <option value="Hinduism">Hinduism</option>
+            <option value="Christianity">Christianity</option>
+            <option value="Buddhism">Buddhism</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+        <div class="form-group col-6">
+          <label>Marital Status*</label>
+          <select id="marital_status">
+            <option value="Single">Single</option>
+            <option value="Married">Married</option>
+          </select>
+        </div>
+        <div class="form-group col-12 conditional-field" id="spouseBox" style="display:none;">
+          <label>Spouse Name (if Married)</label>
+          <input type="text" id="spouse_name" placeholder="Spouse Name in English">
+        </div>
+
+        <div class="form-group col-4">
+          <label>National ID?*</label>
+          <select id="nid">
+            <option value="1">Yes</option>
+            <option value="2">No</option>
+          </select>
+        </div>
+        <div class="form-group col-8" id="nidNoBox">
+          <label>National ID Number</label>
+          <input type="text" id="nid_no" placeholder="10 / 13 / 17 digit NID">
+        </div>
+
+        <div class="form-group col-4">
+          <label>Birth Reg?*</label>
+          <select id="breg">
+            <option value="2">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+        <div class="form-group col-8" id="bregNoBox" style="display:none;">
+          <label>Birth Registration No</label>
+          <input type="text" id="breg_no" placeholder="17 digit Birth Reg No">
+        </div>
+
+        <div class="form-group col-4">
+          <label>Passport?*</label>
+          <select id="passport">
+            <option value="2">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+        <div class="form-group col-8" id="passportNoBox" style="display:none;">
+          <label>Passport Number</label>
+          <input type="text" id="passport_no" placeholder="Passport No">
+        </div>
+
+        <div class="form-group col-6">
+          <label>Mobile Number*</label>
+          <input type="tel" id="mobile" placeholder="e.g. 01712345678">
+        </div>
+        <div class="form-group col-6">
+          <label>Confirm Mobile*</label>
+          <input type="tel" id="confirm_mobile" placeholder="Same as mobile">
+        </div>
+        <div class="form-group col-12">
+          <label>Email Address</label>
+          <input type="email" id="email" placeholder="e.g. user@gmail.com">
+        </div>
+        <div class="form-group col-6">
+          <label>Quota*</label>
+          <select id="quota">
+            <option value="Non Quota">Non Quota</option>
+            <option value="Freedom Fighter">Freedom Fighter</option>
+            <option value="Child of Freedom Fighter">Child of Freedom Fighter</option>
+            <option value="Grand Child of Freedom Fighter">Grand Child of Freedom Fighter</option>
+            <option value="Physically Handicapped">Physically Handicapped</option>
+            <option value="Tribal">Tribal</option>
+            <option value="Ansar-VDP">Ansar-VDP</option>
+          </select>
+        </div>
+        <div class="form-group col-6">
+          <label>Departmental Status*</label>
+          <select id="dep_status">
+            <option value="None">None</option>
+            <option value="Govt. Employee">Govt. Employee</option>
+            <option value="Semi Govt. Employee">Semi Govt. Employee</option>
+            <option value="Autonomous">Autonomous</option>
+            <option value="Departmental Candidate">Departmental Candidate</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: ADDRESS -->
+    <div id="tab-address" class="tab-pane">
+      <div class="section-title">Present Address</div>
+      <div class="form-grid">
+        <div class="form-group col-6">
+          <label>Care of*</label>
+          <input type="text" id="present_careof" placeholder="Father / Guardian name">
+        </div>
+        <div class="form-group col-6">
+          <label>Village / Road / House / Flat*</label>
+          <input type="text" id="present_village" placeholder="e.g. House 12, Road 4, Sector 7">
+        </div>
+        <div class="form-group col-6">
+          <label>District*</label>
+          <input type="text" id="present_district" placeholder="e.g. Dhaka, Chittagong, Rajshahi">
+        </div>
+        <div class="form-group col-6">
+          <label>Upazila / Thana*</label>
+          <input type="text" id="present_upazila" placeholder="e.g. Dhanmondi, Mirpur, Sadar">
+        </div>
+        <div class="form-group col-6">
+          <label>Post Office*</label>
+          <input type="text" id="present_post" placeholder="Post Office Name">
+        </div>
+        <div class="form-group col-6">
+          <label>Post Code*</label>
+          <input type="text" id="present_postcode" placeholder="e.g. 1230">
+        </div>
+      </div>
+
+      <div class="checkbox-row" style="margin-top: 15px; margin-bottom: 12px;">
+        <label class="custom-checkbox">
+          <input type="checkbox" id="same_as_present" checked>
+          <span class="checkmark"></span>
+          <strong>Permanent Address is same as Present Address</strong>
+        </label>
+      </div>
+
+      <div id="permanentAddressBox" style="display: none;">
+        <div class="section-title" style="margin-top: 10px;">Permanent Address</div>
+        <div class="form-grid">
+          <div class="form-group col-6">
+            <label>Care of</label>
+            <input type="text" id="permanent_careof" placeholder="Care of">
+          </div>
+          <div class="form-group col-6">
+            <label>Village / Road / House</label>
+            <input type="text" id="permanent_village" placeholder="Village / Road">
+          </div>
+          <div class="form-group col-6">
+            <label>District</label>
+            <input type="text" id="permanent_district" placeholder="District">
+          </div>
+          <div class="form-group col-6">
+            <label>Upazila / Thana</label>
+            <input type="text" id="permanent_upazila" placeholder="Upazila">
+          </div>
+          <div class="form-group col-6">
+            <label>Post Office</label>
+            <input type="text" id="permanent_post" placeholder="Post Office">
+          </div>
+          <div class="form-group col-6">
+            <label>Post Code</label>
+            <input type="text" id="permanent_postcode" placeholder="Post Code">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: EDUCATION -->
+    <div id="tab-education" class="tab-pane">
+      <!-- SSC -->
+      <div class="section-title">SSC / Equivalent*</div>
+      <div class="form-grid">
+        <div class="form-group col-6">
+          <label>Examination*</label>
+          <select id="ssc_exam">
+            <option value="S.S.C">S.S.C</option>
+            <option value="Dakhil">Dakhil</option>
+            <option value="S.S.C Vocational">S.S.C Vocational</option>
+            <option value="O Level / Cambridge">O Level / Cambridge</option>
+            <option value="Equivalent">Equivalent</option>
+          </select>
+        </div>
+        <div class="form-group col-6">
+          <label>Roll Number*</label>
+          <input type="number" id="ssc_roll" placeholder="SSC Roll">
+        </div>
+        <div class="form-group col-6">
+          <label>Group / Subject*</label>
+          <select id="ssc_group">
+            <option value="Science">Science</option>
+            <option value="Humanities">Humanities</option>
+            <option value="Business Studies">Business Studies</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+        <div class="form-group col-6">
+          <label>Board*</label>
+          <select id="ssc_board">
+            <option value="Dhaka">Dhaka</option>
+            <option value="Rajshahi">Rajshahi</option>
+            <option value="Comilla">Comilla</option>
+            <option value="Jessore">Jessore</option>
+            <option value="Chittagong">Chittagong</option>
+            <option value="Barisal">Barisal</option>
+            <option value="Sylhet">Sylhet</option>
+            <option value="Dinajpur">Dinajpur</option>
+            <option value="Mymensingh">Mymensingh</option>
+            <option value="Madrasah">Madrasah</option>
+            <option value="Technical">Technical</option>
+          </select>
+        </div>
+        <div class="form-group col-4">
+          <label>Result Type*</label>
+          <select id="ssc_result_type">
+            <option value="GPA(out of 5)">GPA(out of 5)</option>
+            <option value="1st Division">1st Division</option>
+            <option value="2nd Division">2nd Division</option>
+            <option value="3rd Division">3rd Division</option>
+          </select>
+        </div>
+        <div class="form-group col-4">
+          <label>GPA / Result*</label>
+          <input type="number" step="0.01" id="ssc_result" placeholder="e.g. 5.00">
+        </div>
+        <div class="form-group col-4">
+          <label>Passing Year*</label>
+          <input type="number" id="ssc_year" placeholder="e.g. 2016">
+        </div>
+      </div>
+
+      <!-- HSC -->
+      <div class="section-title" style="margin-top:16px;">HSC / Equivalent*</div>
+      <div class="form-grid">
+        <div class="form-group col-6">
+          <label>Examination*</label>
+          <select id="hsc_exam">
+            <option value="H.S.C">H.S.C</option>
+            <option value="Alim">Alim</option>
+            <option value="H.S.C Vocational">H.S.C Vocational</option>
+            <option value="Diploma in Engineering">Diploma in Engineering</option>
+            <option value="A Level">A Level</option>
+            <option value="Equivalent">Equivalent</option>
+          </select>
+        </div>
+        <div class="form-group col-6">
+          <label>Roll Number*</label>
+          <input type="number" id="hsc_roll" placeholder="HSC Roll">
+        </div>
+        <div class="form-group col-6">
+          <label>Group / Subject*</label>
+          <select id="hsc_group">
+            <option value="Science">Science</option>
+            <option value="Humanities">Humanities</option>
+            <option value="Business Studies">Business Studies</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+        <div class="form-group col-6">
+          <label>Board*</label>
+          <select id="hsc_board">
+            <option value="Dhaka">Dhaka</option>
+            <option value="Rajshahi">Rajshahi</option>
+            <option value="Comilla">Comilla</option>
+            <option value="Jessore">Jessore</option>
+            <option value="Chittagong">Chittagong</option>
+            <option value="Barisal">Barisal</option>
+            <option value="Sylhet">Sylhet</option>
+            <option value="Dinajpur">Dinajpur</option>
+            <option value="Mymensingh">Mymensingh</option>
+            <option value="Madrasah">Madrasah</option>
+            <option value="Technical">Technical</option>
+          </select>
+        </div>
+        <div class="form-group col-4">
+          <label>Result Type*</label>
+          <select id="hsc_result_type">
+            <option value="GPA(out of 5)">GPA(out of 5)</option>
+            <option value="1st Division">1st Division</option>
+            <option value="2nd Division">2nd Division</option>
+          </select>
+        </div>
+        <div class="form-group col-4">
+          <label>GPA / Result*</label>
+          <input type="number" step="0.01" id="hsc_result" placeholder="e.g. 5.00">
+        </div>
+        <div class="form-group col-4">
+          <label>Passing Year*</label>
+          <input type="number" id="hsc_year" placeholder="e.g. 2018">
+        </div>
+      </div>
+
+      <!-- GRADUATION -->
+      <div class="section-title" style="margin-top:16px;">Graduation / Degree</div>
+      <div class="form-grid">
+        <div class="form-group col-6">
+          <label>Examination / Degree</label>
+          <input type="text" id="gra_exam" placeholder="e.g. B.Sc (Honours), B.B.A, B.A">
+        </div>
+        <div class="form-group col-6">
+          <label>Subject / Major</label>
+          <input type="text" id="gra_subject" placeholder="e.g. Fisheries, Computer Science, English">
+        </div>
+        <div class="form-group col-12">
+          <label>University / Institute</label>
+          <input type="text" id="gra_institute" placeholder="e.g. University of Dhaka, BUET, National University">
+        </div>
+        <div class="form-group col-4">
+          <label>Result Type</label>
+          <select id="gra_result_type">
+            <option value="CGPA(out of 4)">CGPA(out of 4)</option>
+            <option value="CGPA(out of 5)">CGPA(out of 5)</option>
+            <option value="1st Class">1st Class</option>
+            <option value="2nd Class">2nd Class</option>
+            <option value="Passed">Passed</option>
+          </select>
+        </div>
+        <div class="form-group col-4">
+          <label>CGPA / Result</label>
+          <input type="number" step="0.01" id="gra_result" placeholder="e.g. 3.75">
+        </div>
+        <div class="form-group col-2">
+          <label>Passing Year</label>
+          <input type="number" id="gra_year" placeholder="2022">
+        </div>
+        <div class="form-group col-2">
+          <label>Duration</label>
+          <select id="gra_duration">
+            <option value="4 Years">4 Years</option>
+            <option value="3 Years">3 Years</option>
+            <option value="5 Years">5 Years</option>
+            <option value="2 Years">2 Years</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- MASTERS (OPTIONAL) -->
+      <div class="checkbox-row" style="margin-top: 16px;">
+        <label class="custom-checkbox">
+          <input type="checkbox" id="if_applicable_mas">
+          <span class="checkmark"></span>
+          <strong>Include Masters Degree</strong>
+        </label>
+      </div>
+
+      <div id="mastersBox" style="display:none; margin-top:10px;">
+        <div class="section-title">Masters Degree</div>
+        <div class="form-grid">
+          <div class="form-group col-6">
+            <label>Examination / Degree</label>
+            <input type="text" id="mas_exam" placeholder="e.g. M.Sc, M.B.A, M.A">
+          </div>
+          <div class="form-group col-6">
+            <label>Subject</label>
+            <input type="text" id="mas_subject" placeholder="Subject">
+          </div>
+          <div class="form-group col-12">
+            <label>University / Institute</label>
+            <input type="text" id="mas_institute" placeholder="University Name">
+          </div>
+          <div class="form-group col-4">
+            <label>Result Type</label>
+            <select id="mas_result_type">
+              <option value="CGPA(out of 4)">CGPA(out of 4)</option>
+              <option value="CGPA(out of 5)">CGPA(out of 5)</option>
+              <option value="1st Class">1st Class</option>
+              <option value="2nd Class">2nd Class</option>
+            </select>
+          </div>
+          <div class="form-group col-4">
+            <label>CGPA / Result</label>
+            <input type="number" step="0.01" id="mas_result" placeholder="e.g. 3.80">
+          </div>
+          <div class="form-group col-2">
+            <label>Passing Year</label>
+            <input type="number" id="mas_year" placeholder="2023">
+          </div>
+          <div class="form-group col-2">
+            <label>Duration</label>
+            <select id="mas_duration">
+              <option value="1 Year">1 Year</option>
+              <option value="2 Years">2 Years</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: EXPERIENCE -->
+    <div id="tab-experience" class="tab-pane">
+      <div class="checkbox-row" style="margin-bottom: 12px;">
+        <label class="custom-checkbox">
+          <input type="checkbox" id="if_applicable_exp">
+          <span class="checkmark"></span>
+          <strong>Include Job Experience</strong>
+        </label>
+      </div>
+
+      <div id="experienceBox" style="display:none;">
+        <div class="section-title">Employment Information</div>
+        <div class="form-grid">
+          <div class="form-group col-6">
+            <label>Employment Type</label>
+            <select id="employment_type">
+              <option value="Permanent">Permanent</option>
+              <option value="Contractual">Contractual</option>
+              <option value="Temporary">Temporary</option>
+              <option value="Part Time">Part Time</option>
+            </select>
+          </div>
+          <div class="form-group col-6">
+            <label>Designation / Post</label>
+            <input type="text" id="designation" placeholder="e.g. Software Engineer">
+          </div>
+          <div class="form-group col-12">
+            <label>Organization / Company Name</label>
+            <input type="text" id="organization" placeholder="e.g. Bangladesh Computer Council">
+          </div>
+          <div class="form-group col-6">
+            <label>Start Date</label>
+            <input type="date" id="job_start_date">
+          </div>
+          <div class="form-group col-6">
+            <label>End Date</label>
+            <input type="date" id="job_end_date">
+          </div>
+          <div class="form-group col-12">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="currently_working">
+              <span class="checkmark"></span>
+              Currently Working Here
+            </label>
+          </div>
+          <div class="form-group col-12">
+            <label>Office Address</label>
+            <input type="text" id="office_address" placeholder="e.g. Agargaon, Dhaka-1207">
+          </div>
+          <div class="form-group col-12">
+            <label>Job Description / Responsibilities</label>
+            <textarea id="job_description" rows="2" placeholder="Brief job responsibilities..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div id="noExpNotice" class="info-card">
+        <p>ℹ️ If the circular does not mandate experience or you are a fresher, keep this unchecked. Teletalk forms accept applications without experience.</p>
+      </div>
+    </div>
+
+    <!-- TAB 5: SETTINGS / MANAGE -->
+    <div id="tab-settings" class="tab-pane">
+      <div class="section-title">Profile Backup & Management</div>
+      <div class="settings-actions">
+        <button id="btnLoadDemo" class="btn-outline">
+          ✨ Load Sample Profile (Demo)
+        </button>
+        <button id="btnExportJson" class="btn-outline">
+          📥 Export Profile (JSON)
+        </button>
+        <label class="btn-outline file-label">
+          📤 Import Profile (JSON)
+          <input type="file" id="importFileInput" accept=".json" style="display:none;">
+        </label>
+        <button id="btnClearProfile" class="btn-outline btn-danger">
+          🗑️ Clear Saved Profile
+        </button>
+      </div>
+
+      <div class="info-card" style="margin-top: 15px;">
+        <h4>💡 How to use on Teletalk:</h4>
+        <ol>
+          <li>Fill your details here once and click <strong>💾 Save Profile</strong>.</li>
+          <li>Go to any Teletalk job page (e.g. <code>https://*.teletalk.com.bd/application.php</code>).</li>
+          <li>Click the floating <strong>⚡ Auto-Fill Application</strong> button (or press <strong>Alt+A</strong>).</li>
+          <li>All personal, address, and academic fields will be filled instantly!</li>
+          <li>Solve the 4-digit captcha and submit your application.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div id="statusMsg" class="status-msg"></div>
+    <div class="footer-buttons">
+      <button id="btnSaveProfile" class="btn-primary">💾 Save Profile</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
