@@ -376,58 +376,84 @@
     }
 
     // 8. National ID (Radios: #nid_01 = Yes, #nid_02 = No)
-    if (p.nid === '1' || p.nid === 'Yes' || p.nid_no) {
-      const nidYes = document.getElementById('nid_01');
+    const hasNid = Boolean(
+      (p.nid_no && String(p.nid_no).trim().length > 0) ||
+      p.nid === '1' ||
+      p.nid === 1 ||
+      String(p.nid).toLowerCase() === 'yes'
+    );
+
+    const nidYes = document.getElementById('nid_01');
+    const nidNo = document.getElementById('nid_02');
+    const nidInput = document.querySelector('input[name="nid_no"]') || document.getElementById('xplod');
+
+    if (hasNid || (nidYes && nidYes.checked)) {
+      if (nidNo) nidNo.checked = false;
       if (nidYes) {
         nidYes.checked = true;
-        nidYes.dispatchEvent(new Event('click', { bubbles: true }));
-        nidYes.dispatchEvent(new Event('change', { bubbles: true }));
-        if (typeof nidYes.onclick === 'function') {
-          try { nidYes.onclick(); } catch(e) {}
-        }
+        nidYes.click();
         count++;
-        await sleep(150);
+      }
 
-        const nidInput = document.querySelector('input[name="nid_no"]') || document.getElementById('xplod');
-        if (nidInput && p.nid_no) {
+      await sleep(100);
+
+      // Explicitly ensure the input and its wrapping label are visible
+      if (nidInput) {
+        nidInput.style.display = '';
+        nidInput.hidden = false;
+        const parentLabel = nidInput.closest('label');
+        if (parentLabel) parentLabel.style.display = '';
+
+        if (p.nid_no) {
           fillInput(nidInput, p.nid_no);
           count++;
         }
+
+        // Re-ensure visibility after filling (in case change event triggered FormManager hide)
+        nidInput.style.display = '';
+        nidInput.hidden = false;
+        if (parentLabel) parentLabel.style.display = '';
       }
-    } else {
-      const nidNo = document.getElementById('nid_02');
+    } else if (p.nid === '2' && !nidInput?.value) {
       if (nidNo) {
-        nidNo.checked = true;
-        nidNo.dispatchEvent(new Event('click', { bubbles: true }));
-        nidNo.dispatchEvent(new Event('change', { bubbles: true }));
+        nidNo.click();
       }
     }
 
     // 9. Marital Status (Radios: #mstatus_01 = Single, #mstatus_02 = Married)
-    if (p.marital_status === 'Married') {
-      const mMarried = document.getElementById('mstatus_02');
+    const isMarried = (p.marital_status === 'Married');
+    const mSingle = document.getElementById('mstatus_01');
+    const mMarried = document.getElementById('mstatus_02');
+    const spouseInput = document.querySelector('input[name="s_name"]');
+
+    if (isMarried) {
+      if (mSingle) mSingle.checked = false;
       if (mMarried) {
         mMarried.checked = true;
-        mMarried.dispatchEvent(new Event('click', { bubbles: true }));
-        mMarried.dispatchEvent(new Event('change', { bubbles: true }));
-        if (typeof mMarried.onclick === 'function') {
-          try { mMarried.onclick(); } catch(e) {}
-        }
+        mMarried.click();
         count++;
-        await sleep(150);
+      }
 
-        const spouseInput = document.querySelector('input[name="s_name"]');
-        if (spouseInput && p.spouse_name) {
+      await sleep(100);
+
+      if (spouseInput) {
+        spouseInput.style.display = '';
+        spouseInput.hidden = false;
+        const parentLabel = spouseInput.closest('label');
+        if (parentLabel) parentLabel.style.display = '';
+
+        if (p.spouse_name) {
           fillInput(spouseInput, p.spouse_name);
           count++;
         }
+
+        spouseInput.style.display = '';
+        spouseInput.hidden = false;
+        if (parentLabel) parentLabel.style.display = '';
       }
     } else {
-      const mSingle = document.getElementById('mstatus_01');
       if (mSingle) {
-        mSingle.checked = true;
-        mSingle.dispatchEvent(new Event('click', { bubbles: true }));
-        mSingle.dispatchEvent(new Event('change', { bubbles: true }));
+        mSingle.click();
       }
     }
 
