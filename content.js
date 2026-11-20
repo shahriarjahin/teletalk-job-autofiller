@@ -1,5 +1,5 @@
 // Teletalk Job FastFiller - In-Page Content Script
-// Supports *.teletalk.com.bd and alljobs.teletalk.com.bd
+// Supports Modern Teletalk (*.teletalk.com.bd, alljobs.teletalk.com.bd) & Classic BPSC (bpsc.teletalk.com.bd/ncad)
 
 (function() {
   'use strict';
@@ -24,10 +24,28 @@
       (
         document.getElementById('name') ||
         document.getElementById('father') ||
+        document.getElementById('fathername') ||
         document.getElementById('dob') ||
+        document.getElementById('b_day') ||
+        document.getElementById('exam1') ||
+        document.getElementById('present_care') ||
         document.querySelector('[name="name"]') ||
-        window.location.pathname.includes('application.php')
+        window.location.pathname.includes('application.php') ||
+        window.location.pathname.includes('apply')
       )
+    );
+  }
+
+  // Detect whether the current page is Classic BPSC / Non-Cadre format
+  function isClassicBPSCForm() {
+    return Boolean(
+      document.getElementById('fathername') ||
+      document.getElementById('b_day') ||
+      document.getElementById('menu_one') ||
+      document.getElementById('exam1') ||
+      document.querySelector('[name="fathername"]') ||
+      document.querySelector('[name="menu_one"]') ||
+      window.location.hostname.includes('bpsc.teletalk.com.bd')
     );
   }
 
@@ -94,7 +112,7 @@
     }
   });
 
-  // Extract all filled fields from the current page
+  // Extract all filled fields from the current page (handles Modern & Classic BPSC)
   function extractCurrentFormData() {
     const p = {};
     let count = 0;
@@ -120,70 +138,117 @@
       return el ? Boolean(el.checked) : false;
     };
 
+    // 1. Basic Personal Information
     p.name = getRawVal('name');
-    p.name_bn = getRawVal('name_bn');
-    p.father = getRawVal('father');
-    p.father_bn = getRawVal('father_bn');
-    p.mother = getRawVal('mother');
-    p.mother_bn = getRawVal('mother_bn');
-    p.dob = getRawVal('dob');
-    p.gender = getTextOrVal('gender');
+    p.name_bn = getRawVal('bn_name') || getRawVal('name_bn');
+    p.father = getRawVal('fathername') || getRawVal('father');
+    p.father_bn = getRawVal('bn_father') || getRawVal('father_bn');
+    p.mother = getRawVal('mothername') || getRawVal('mother');
+    p.mother_bn = getRawVal('bn_mother') || getRawVal('mother_bn');
+
+    // DOB (date input or 3 selects: b_day, b_month, b_year)
+    if (getRawVal('dob')) {
+      p.dob = getRawVal('dob');
+    } else if (document.getElementById('b_year')) {
+      const y = getTextOrVal('b_year');
+      const m = getTextOrVal('b_month');
+      const d = getTextOrVal('b_day');
+      if (y && m && d) {
+        const cleanY = y.replace(/[^0-9]/g, '');
+        const cleanM = String(parseInt(m.replace(/[^0-9]/g, ''), 10)).padStart(2, '0');
+        const cleanD = String(parseInt(d.replace(/[^0-9]/g, ''), 10)).padStart(2, '0');
+        if (cleanY && cleanM && cleanD) {
+          p.dob = `${cleanY}-${cleanM}-${cleanD}`;
+        }
+      }
+    }
+
+    p.gender = getTextOrVal('sex') || getTextOrVal('gender');
     p.religion = getTextOrVal('religion');
-    p.marital_status = getTextOrVal('marital_status');
-    p.spouse_name = getRawVal('spouse_name');
-    p.nid = getRawVal('nid') || (getTextOrVal('nid') === 'Yes' ? '1' : '2');
-    p.nid_no = getRawVal('nid_no');
+
+    // Marital Status
+    if (getChecked('mstatus_02')) {
+      p.marital_status = 'Married';
+      const spInput = document.querySelector('input[name="s_name"]') || document.getElementById('spouse_name');
+      p.spouse_name = spInput ? spInput.value.trim() : '';
+    } else if (getChecked('mstatus_01')) {
+      p.marital_status = 'Single';
+    } else {
+      p.marital_status = getTextOrVal('marital_status');
+      p.spouse_name = getRawVal('spouse_name');
+    }
+
+    // NID
+    if (getChecked('nid_01')) {
+      p.nid = '1';
+      const nidInput = document.querySelector('input[name="nid_no"]') || document.getElementById('nid_no');
+      p.nid_no = nidInput ? nidInput.value.trim() : '';
+    } else if (getChecked('nid_02')) {
+      p.nid = '2';
+    } else {
+      p.nid = getRawVal('nid') || (getTextOrVal('nid') === 'Yes' ? '1' : '2');
+      p.nid_no = getRawVal('nid_no');
+    }
+
     p.breg = getRawVal('breg') || (getTextOrVal('breg') === 'Yes' ? '1' : '2');
     p.breg_no = getRawVal('breg_no');
     p.passport = getRawVal('passport') || (getTextOrVal('passport') === 'Yes' ? '1' : '2');
     p.passport_no = getRawVal('passport_no');
-    p.mobile = getRawVal('mobile');
-    p.confirm_mobile = getRawVal('confirm_mobile') || p.mobile;
+
+    p.mobile = getRawVal('mobileno') || getRawVal('mobile');
+    p.confirm_mobile = getRawVal('confirmmobile') || getRawVal('confirm_mobile') || p.mobile;
     p.email = getRawVal('email');
-    p.quota = getTextOrVal('quota') || 'Non Quota';
+    p.quota = getTextOrVal('ffq') || getTextOrVal('quota') || 'Non Quota';
     p.dep_status = getTextOrVal('dep_status') || 'None';
 
-    p.present_careof = getRawVal('present_careof');
-    p.present_village = getRawVal('present_village');
-    p.present_district = getTextOrVal('present_district');
-    p.present_upazila = getTextOrVal('present_upazila');
+    // Address
+    p.present_careof = getRawVal('present_care') || getRawVal('present_careof');
+    p.present_village = getRawVal('present_vill') || getRawVal('present_village');
+    p.present_district = getTextOrVal('menu_one') || getTextOrVal('present_district');
+    p.present_upazila = getTextOrVal('menu_one_list') || getTextOrVal('present_upazila');
     p.present_post = getRawVal('present_post');
-    p.present_postcode = getRawVal('present_postcode');
-    p.same_as_present = getChecked('same_as_present');
+    p.present_postcode = getRawVal('present_pcode') || getRawVal('present_postcode');
+    p.same_as_present = getChecked('copy') || getChecked('same_as_present');
 
-    p.permanent_careof = getRawVal('permanent_careof') || p.present_careof;
-    p.permanent_village = getRawVal('permanent_village') || p.present_village;
-    p.permanent_district = getTextOrVal('permanent_district') || p.present_district;
-    p.permanent_upazila = getTextOrVal('permanent_upazila') || p.present_upazila;
+    p.permanent_careof = getRawVal('permanent_care') || getRawVal('permanent_careof') || p.present_careof;
+    p.permanent_village = getRawVal('permanent_vill') || getRawVal('permanent_village') || p.present_village;
+    p.permanent_district = getTextOrVal('menu_two') || getTextOrVal('permanent_district') || p.present_district;
+    p.permanent_upazila = getTextOrVal('menu_two_list') || getTextOrVal('permanent_upazila') || p.present_upazila;
     p.permanent_post = getRawVal('permanent_post') || p.present_post;
-    p.permanent_postcode = getRawVal('permanent_postcode') || p.present_postcode;
+    p.permanent_postcode = getRawVal('permanent_pcode') || getRawVal('permanent_postcode') || p.present_postcode;
 
-    p.ssc_exam = getTextOrVal('ssc_exam');
-    p.ssc_roll = getRawVal('ssc_roll');
-    p.ssc_group = getTextOrVal('ssc_group');
-    p.ssc_board = getTextOrVal('ssc_board');
-    p.ssc_result_type = getTextOrVal('ssc_result_type');
-    p.ssc_result = getRawVal('ssc_result');
-    p.ssc_year = getTextOrVal('ssc_year');
+    // SSC
+    p.ssc_exam = getTextOrVal('exam1') || getTextOrVal('ssc_exam');
+    p.ssc_roll = getRawVal('roll1') || getRawVal('ssc_roll');
+    p.ssc_reg = getRawVal('reg1');
+    p.ssc_group = getTextOrVal('subject1') || getTextOrVal('ssc_group');
+    p.ssc_board = getTextOrVal('institute1') || getTextOrVal('ssc_board');
+    p.ssc_result_type = getTextOrVal('result1') || getTextOrVal('ssc_result_type');
+    p.ssc_result = getRawVal('result_gpa1') || getRawVal('ssc_result');
+    p.ssc_year = getTextOrVal('year1') || getTextOrVal('ssc_year');
 
-    p.hsc_exam = getTextOrVal('hsc_exam');
-    p.hsc_roll = getRawVal('hsc_roll');
-    p.hsc_group = getTextOrVal('hsc_group');
-    p.hsc_board = getTextOrVal('hsc_board');
-    p.hsc_result_type = getTextOrVal('hsc_result_type');
-    p.hsc_result = getRawVal('hsc_result');
-    p.hsc_year = getTextOrVal('hsc_year');
+    // HSC
+    p.hsc_exam = getTextOrVal('exam2') || getTextOrVal('hsc_exam');
+    p.hsc_roll = getRawVal('roll2') || getRawVal('hsc_roll');
+    p.hsc_reg = getRawVal('reg2');
+    p.hsc_group = getTextOrVal('subject2') || getTextOrVal('hsc_group');
+    p.hsc_board = getTextOrVal('institute2') || getTextOrVal('hsc_board');
+    p.hsc_result_type = getTextOrVal('result2') || getTextOrVal('hsc_result_type');
+    p.hsc_result = getRawVal('result_gpa2') || getRawVal('hsc_result');
+    p.hsc_year = getTextOrVal('year2') || getTextOrVal('hsc_year');
 
-    p.gra_exam = getTextOrVal('gra_exam');
-    p.gra_subject = getTextOrVal('gra_subject');
-    p.gra_institute = getTextOrVal('gra_institute');
-    p.gra_result_type = getTextOrVal('gra_result_type');
-    p.gra_result = getRawVal('gra_result');
-    p.gra_year = getTextOrVal('gra_year');
-    p.gra_duration = getTextOrVal('gra_duration');
+    // Graduation
+    p.gra_exam = getTextOrVal('exam3') || getTextOrVal('gra_exam');
+    p.gra_subject = getTextOrVal('subject3') || getTextOrVal('gra_subject');
+    p.gra_institute = getTextOrVal('institute3') || getTextOrVal('gra_institute');
+    p.gra_result_type = getTextOrVal('result3') || getTextOrVal('gra_result_type');
+    p.gra_result = getRawVal('result_gpa3') || getRawVal('gra_result');
+    p.gra_year = getTextOrVal('year3') || getTextOrVal('gra_year');
+    p.gra_duration = getTextOrVal('duration3') || getTextOrVal('gra_duration');
 
-    p.if_applicable_mas = getChecked('if_applicable_mas');
-    p.if_applicable_exp = getChecked('if_applicable_exp');
+    // Masters & Experience flags
+    p.if_applicable_mas = getChecked('masters') || getChecked('if_applicable_mas');
+    p.if_applicable_exp = getChecked('job_no') || getChecked('if_applicable_exp');
 
     // Count filled fields
     Object.keys(p).forEach(k => {
@@ -219,8 +284,363 @@
     });
   }
 
-  // Core Form Filling Logic
+  // Dispatch to appropriate form filling implementation
   async function executeFormFill(p) {
+    if (isClassicBPSCForm()) {
+      return await executeBPSCFormFill(p);
+    } else {
+      return await executeModernTeletalkFill(p);
+    }
+  }
+
+  // =========================================================================
+  // CLASSIC BPSC / NON-CADRE FORM FILLING (bpsc.teletalk.com.bd/ncad/)
+  // =========================================================================
+  async function executeBPSCFormFill(p) {
+    let count = 0;
+
+    // 1. Applicant Name
+    if (fillField('name', p.name)) count++;
+    if (fillField('bn_name', p.name_bn)) count++;
+
+    // 2. Father's Name
+    if (fillField('fathername', p.father)) count++;
+    if (fillField('bn_father', p.father_bn)) count++;
+
+    // 3. Mother's Name
+    if (fillField('mothername', p.mother)) count++;
+    if (fillField('bn_mother', p.mother_bn)) count++;
+
+    // 4. Date of Birth (3 selects: b_day, b_month, b_year)
+    if (p.dob) {
+      const parts = p.dob.trim().split(/[-/.]/);
+      let y = '', m = '', d = '';
+      if (parts.length === 3) {
+        if (parts[0].length === 4) { // YYYY-MM-DD
+          y = parts[0];
+          m = String(parseInt(parts[1], 10)).padStart(2, '0');
+          d = String(parseInt(parts[2], 10)).padStart(2, '0');
+        } else if (parts[2].length === 4) { // DD-MM-YYYY
+          d = String(parseInt(parts[0], 10)).padStart(2, '0');
+          m = String(parseInt(parts[1], 10)).padStart(2, '0');
+          y = parts[2];
+        }
+
+        const bDay = document.getElementById('b_day');
+        const bMonth = document.getElementById('b_month');
+        const bYear = document.getElementById('b_year');
+        if (bDay && d && selectOption(bDay, d)) count++;
+        if (bMonth && m && selectOption(bMonth, m)) count++;
+        if (bYear && y && selectOption(bYear, y)) count++;
+      }
+    }
+
+    // 5. Gender / Sex (#sex)
+    const sexEl = document.getElementById('sex') || document.querySelector('[name="sex"]');
+    if (sexEl && p.gender) {
+      if (selectOption(sexEl, p.gender)) count++;
+    }
+
+    // 6. Quota & Special Categories
+    const ffqEl = document.getElementById('ffq') || document.querySelector('[name="ffq"]');
+    if (ffqEl) {
+      if (!selectOption(ffqEl, p.quota || 'Non Quota')) {
+        if (!selectOption(ffqEl, 'Non Freedom Fighter')) {
+          selectOption(ffqEl, 'Non Quota');
+        }
+      }
+      count++;
+    }
+
+    // Non-Tribal radio (#tribal2)
+    const tribal2 = document.getElementById('tribal2');
+    if (tribal2 && !tribal2.checked) {
+      tribal2.checked = true;
+      tribal2.dispatchEvent(new Event('change', { bubbles: true }));
+      count++;
+    }
+
+    // Non-Handicap radio (#phc2)
+    const phc2 = document.getElementById('phc2');
+    if (phc2 && !phc2.checked) {
+      phc2.checked = true;
+      phc2.dispatchEvent(new Event('change', { bubbles: true }));
+      count++;
+    }
+
+    // 7. Nationality
+    const natEl = document.getElementById('nationality') || document.querySelector('[name="nationality"]');
+    if (natEl) {
+      selectOption(natEl, 'Bangladeshi');
+      count++;
+    }
+
+    // 8. National ID (Radios: #nid_01 = Yes, #nid_02 = No)
+    if (p.nid === '1' || p.nid === 'Yes' || p.nid_no) {
+      const nidYes = document.getElementById('nid_01');
+      if (nidYes) {
+        nidYes.checked = true;
+        nidYes.dispatchEvent(new Event('click', { bubbles: true }));
+        nidYes.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof nidYes.onclick === 'function') {
+          try { nidYes.onclick(); } catch(e) {}
+        }
+        count++;
+        await sleep(150);
+
+        const nidInput = document.querySelector('input[name="nid_no"]') || document.getElementById('xplod');
+        if (nidInput && p.nid_no) {
+          fillInput(nidInput, p.nid_no);
+          count++;
+        }
+      }
+    } else {
+      const nidNo = document.getElementById('nid_02');
+      if (nidNo) {
+        nidNo.checked = true;
+        nidNo.dispatchEvent(new Event('click', { bubbles: true }));
+        nidNo.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
+    // 9. Marital Status (Radios: #mstatus_01 = Single, #mstatus_02 = Married)
+    if (p.marital_status === 'Married') {
+      const mMarried = document.getElementById('mstatus_02');
+      if (mMarried) {
+        mMarried.checked = true;
+        mMarried.dispatchEvent(new Event('click', { bubbles: true }));
+        mMarried.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof mMarried.onclick === 'function') {
+          try { mMarried.onclick(); } catch(e) {}
+        }
+        count++;
+        await sleep(150);
+
+        const spouseInput = document.querySelector('input[name="s_name"]');
+        if (spouseInput && p.spouse_name) {
+          fillInput(spouseInput, p.spouse_name);
+          count++;
+        }
+      }
+    } else {
+      const mSingle = document.getElementById('mstatus_01');
+      if (mSingle) {
+        mSingle.checked = true;
+        mSingle.dispatchEvent(new Event('click', { bubbles: true }));
+        mSingle.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
+    // 10. Present Address
+    if (fillField('present_care', p.present_careof)) count++;
+    if (fillField('present_vill', p.present_village)) count++;
+    if (fillField('present_post', p.present_post)) count++;
+    if (fillField('present_pcode', p.present_postcode)) count++;
+    if (fillField('bn_address', p.present_village)) count++;
+
+    // Present District -> Async Upazila
+    const distEl = document.getElementById('menu_one') || document.querySelector('[name="menu_one"]');
+    if (distEl && p.present_district) {
+      if (selectOption(distEl, p.present_district)) {
+        count++;
+        const upLoaded = await waitForDropdownOptions('menu_one_list', 3500);
+        if (upLoaded && p.present_upazila) {
+          const upEl = document.getElementById('menu_one_list') || document.querySelector('[name="menu_one_list"]');
+          if (selectOption(upEl, p.present_upazila)) count++;
+        }
+      }
+    }
+
+    await sleep(200);
+
+    // 11. Permanent Address
+    const copyCheck = document.getElementById('copy') || document.querySelector('[name="copy"]');
+    if (copyCheck && p.same_as_present) {
+      if (!copyCheck.checked) {
+        copyCheck.checked = true;
+        copyCheck.dispatchEvent(new Event('click', { bubbles: true }));
+        copyCheck.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof copyCheck.onclick === 'function') {
+          try { copyCheck.onclick(); } catch(e) {}
+        }
+      }
+      count++;
+    } else if (!p.same_as_present) {
+      if (fillField('permanent_care', p.permanent_careof)) count++;
+      if (fillField('permanent_vill', p.permanent_village)) count++;
+      if (fillField('permanent_post', p.permanent_post)) count++;
+      if (fillField('permanent_pcode', p.permanent_postcode)) count++;
+
+      const permDist = document.getElementById('menu_two') || document.querySelector('[name="menu_two"]');
+      if (permDist && p.permanent_district) {
+        if (selectOption(permDist, p.permanent_district)) {
+          count++;
+          const permUpLoaded = await waitForDropdownOptions('menu_two_list', 3500);
+          if (permUpLoaded && p.permanent_upazila) {
+            const permUpEl = document.getElementById('menu_two_list') || document.querySelector('[name="menu_two_list"]');
+            if (selectOption(permUpEl, p.permanent_upazila)) count++;
+          }
+        }
+      }
+    }
+
+    // 12. Contact Numbers
+    if (fillField('mobileno', p.mobile)) count++;
+    if (fillField('confirmmobile', p.confirm_mobile || p.mobile)) count++;
+
+    // 13. Education - SSC
+    if (fillField('exam1', p.ssc_exam || 'S.S.C')) count++;
+    if (fillField('institute1', p.ssc_board)) count++;
+    if (fillField('roll1', p.ssc_roll)) count++;
+    if (p.ssc_reg) fillField('reg1', p.ssc_reg);
+
+    const res1 = document.getElementById('result1') || document.querySelector('[name="result1"]');
+    if (res1 && p.ssc_result_type) {
+      if (selectOption(res1, p.ssc_result_type)) {
+        count++;
+        await sleep(200);
+        const gpa1 = document.getElementById('result_gpa1') || document.querySelector('input[name="result_gpa1"]');
+        if (gpa1 && p.ssc_result) {
+          if (fillInput(gpa1, p.ssc_result)) count++;
+        }
+      }
+    }
+    if (fillField('subject1', p.ssc_group)) count++;
+    if (fillField('year1', p.ssc_year)) count++;
+
+    // 14. Education - HSC
+    if (fillField('exam2', p.hsc_exam || 'H.S.C')) count++;
+    if (fillField('institute2', p.hsc_board)) count++;
+    if (fillField('roll2', p.hsc_roll)) count++;
+    if (p.hsc_reg) fillField('reg2', p.hsc_reg);
+
+    // Subject/Group is loaded dynamically after exam selection
+    await waitForDropdownOptions('subject2', 2500);
+    if (fillField('subject2', p.hsc_group)) count++;
+
+    const res2 = document.getElementById('result2') || document.querySelector('[name="result2"]');
+    if (res2 && p.hsc_result_type) {
+      if (selectOption(res2, p.hsc_result_type)) {
+        count++;
+        await sleep(200);
+        const gpa2 = document.getElementById('result_gpa2') || document.querySelector('input[name="result_gpa2"]');
+        if (gpa2 && p.hsc_result) {
+          if (fillInput(gpa2, p.hsc_result)) count++;
+        }
+      }
+    }
+    if (fillField('year2', p.hsc_year)) count++;
+
+    // 15. Education - Graduation
+    if (fillField('exam3', p.gra_exam)) count++;
+
+    // Subject is loaded dynamically after exam selection
+    await waitForDropdownOptions('subject3', 3000);
+    if (fillField('subject3', p.gra_subject)) count++;
+
+    if (fillField('institute3', p.gra_institute)) count++;
+
+    const res3 = document.getElementById('result3') || document.querySelector('[name="result3"]');
+    if (res3 && (p.gra_result_type || p.gra_result)) {
+      if (selectOption(res3, p.gra_result_type || 'GPA/CGPA in scale 4')) {
+        count++;
+        await sleep(200);
+        const gpa3 = document.getElementById('result_gpa3') || document.querySelector('input[name="result_gpa3"]');
+        if (gpa3 && p.gra_result) {
+          if (fillInput(gpa3, p.gra_result)) count++;
+        }
+      }
+    }
+    if (fillField('year3', p.gra_year)) count++;
+    if (fillField('duration3', p.gra_duration)) count++;
+
+    // 16. Education - Masters (if applicable)
+    if (p.if_applicable_mas) {
+      const masCheck = document.getElementById('masters') || document.querySelector('[name="masters"]');
+      if (masCheck) {
+        if (!masCheck.checked) {
+          masCheck.checked = true;
+          masCheck.dispatchEvent(new Event('click', { bubbles: true }));
+          masCheck.dispatchEvent(new Event('change', { bubbles: true }));
+          if (typeof masCheck.onclick === 'function') {
+            try { masCheck.onclick(); } catch(e) {}
+          }
+        }
+        count++;
+        await sleep(250);
+
+        if (fillField('exam4', p.mas_exam)) count++;
+        await waitForDropdownOptions('subject4', 2500);
+        if (fillField('subject4', p.mas_subject)) count++;
+        if (fillField('institute4', p.mas_institute)) count++;
+
+        const res4 = document.getElementById('result4') || document.querySelector('[name="result4"]');
+        if (res4 && (p.mas_result_type || p.mas_result)) {
+          if (selectOption(res4, p.mas_result_type || 'GPA/CGPA in scale 4')) {
+            count++;
+            await sleep(200);
+            const gpa4 = document.getElementById('result_gpa4') || document.querySelector('input[name="result_gpa4"]');
+            if (gpa4 && p.mas_result) fillInput(gpa4, p.mas_result);
+          }
+        }
+        if (fillField('year4', p.mas_year)) count++;
+        if (fillField('duration4', p.mas_duration)) count++;
+      }
+    }
+
+    // 17. Job Experience (if applicable)
+    if (p.if_applicable_exp) {
+      const expCheck = document.getElementById('job_no') || document.querySelector('[name="job_no"]');
+      if (expCheck) {
+        if (!expCheck.checked) {
+          expCheck.checked = true;
+          expCheck.dispatchEvent(new Event('click', { bubbles: true }));
+          expCheck.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        count++;
+        await sleep(200);
+
+        if (fillField('organization', p.organization)) count++;
+        if (fillField('job_post', p.designation || p.job_post)) count++;
+        if (fillField('job_address', p.office_address || p.job_address)) count++;
+      }
+    }
+
+    // 18. Exam Centre
+    const centreEl = document.getElementById('exam_centre') || document.querySelector('[name="exam_centre"]');
+    if (centreEl) {
+      if (p.exam_centre) {
+        selectOption(centreEl, p.exam_centre);
+      } else {
+        if (!selectOption(centreEl, 'Dhaka')) {
+          if (centreEl.options.length > 1) {
+            centreEl.selectedIndex = 1;
+            triggerSelectEvents(centreEl);
+          }
+        }
+      }
+      count++;
+    }
+
+    // 19. Declaration Checkbox (#info_yes)
+    const infoYes = document.getElementById('info_yes') || document.querySelector('[name="info_yes"]');
+    if (infoYes && !infoYes.checked) {
+      infoYes.checked = true;
+      infoYes.dispatchEvent(new Event('click', { bubbles: true }));
+      infoYes.dispatchEvent(new Event('change', { bubbles: true }));
+      count++;
+    }
+
+    // 20. Focus Captcha field (#validation)
+    focusCaptchaField();
+
+    return count;
+  }
+
+  // =========================================================================
+  // MODERN TELETALK FORM FILLING (*.teletalk.com.bd, alljobs)
+  // =========================================================================
+  async function executeModernTeletalkFill(p) {
     let count = 0;
 
     // 1. Basic Personal Information
@@ -296,14 +716,13 @@
       count++;
 
       // Wait for AJAX Upazila dropdown to populate
-      const upazilaLoaded = await waitForUpazilaOptions('present_upazila', 3000);
+      const upazilaLoaded = await waitForDropdownOptions('present_upazila', 3000);
       if (upazilaLoaded && p.present_upazila) {
         const upEl = document.getElementById('present_upazila') || document.querySelector('[name="present_upazila"]');
         if (selectOption(upEl, p.present_upazila)) count++;
       }
     }
 
-    // Brief delay to ensure Upazila is finalized before address mirroring
     await sleep(250);
 
     // 8. Address - Permanent Address
@@ -325,7 +744,7 @@
       if (permDistEl && p.permanent_district) {
         selectOption(permDistEl, p.permanent_district);
         count++;
-        const permUpLoaded = await waitForUpazilaOptions('permanent_upazila', 3000);
+        const permUpLoaded = await waitForDropdownOptions('permanent_upazila', 3000);
         if (permUpLoaded && p.permanent_upazila) {
           const permUpEl = document.getElementById('permanent_upazila') || document.querySelector('[name="permanent_upazila"]');
           if (selectOption(permUpEl, p.permanent_upazila)) count++;
@@ -438,6 +857,10 @@
     return count;
   }
 
+  // =========================================================================
+  // SHARED HELPERS & UTILITIES
+  // =========================================================================
+
   // Helper: fill either input or select
   function fillField(idOrName, value) {
     if (value === undefined || value === null || value === '') return false;
@@ -468,17 +891,16 @@
     return true;
   }
 
-  // Smart select option matching
+  // Smart select option matching (exact, synonyms, GPA scale, duration, tokens)
   function selectOption(el, target) {
-    if (!el || !target) return false;
+    if (!el || target === undefined || target === null || target === '') return false;
     const targetStr = String(target).trim().toLowerCase();
 
     // 1. Direct value match
     for (let i = 0; i < el.options.length; i++) {
       if (el.options[i].value.trim().toLowerCase() === targetStr) {
         el.selectedIndex = i;
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-        el.classList.add('tff-field-filled');
+        triggerSelectEvents(el);
         return true;
       }
     }
@@ -487,28 +909,113 @@
     for (let i = 0; i < el.options.length; i++) {
       if (el.options[i].text.trim().toLowerCase() === targetStr) {
         el.selectedIndex = i;
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-        el.classList.add('tff-field-filled');
+        triggerSelectEvents(el);
         return true;
       }
     }
 
-    // 3. Substring / contains match
+    // 3. Synonym / Alternative spelling normalization (Bangladesh districts/boards)
+    const synonyms = {
+      'chattogram': 'chittagong',
+      'chittagong': 'chattogram',
+      'cumilla': 'comilla',
+      'comilla': 'cumilla',
+      'jashore': 'jessore',
+      'jessore': 'jashore',
+      'barishal': 'barisal',
+      'barisal': 'barishal',
+      'bogura': 'bogra',
+      'bogra': 'bogura'
+    };
+    const syn = synonyms[targetStr];
+    if (syn) {
+      for (let i = 0; i < el.options.length; i++) {
+        const optText = el.options[i].text.trim().toLowerCase();
+        if (optText === syn || optText.includes(syn)) {
+          el.selectedIndex = i;
+          triggerSelectEvents(el);
+          return true;
+        }
+      }
+    }
+
+    // 4. Scale 4 / 5 and GPA/CGPA fuzzy match
+    const isGpa4 = (targetStr.includes('4') && (targetStr.includes('gpa') || targetStr.includes('scale') || targetStr.includes('out of') || targetStr === '4'));
+    const isGpa5 = (targetStr.includes('5') && (targetStr.includes('gpa') || targetStr.includes('scale') || targetStr.includes('out of') || targetStr === '5'));
+    if (isGpa4) {
+      for (let i = 0; i < el.options.length; i++) {
+        const optText = el.options[i].text.trim().toLowerCase();
+        if (optText.includes('4') && (optText.includes('gpa') || optText.includes('scale') || optText.includes('out of'))) {
+          el.selectedIndex = i;
+          triggerSelectEvents(el);
+          return true;
+        }
+      }
+    }
+    if (isGpa5) {
+      for (let i = 0; i < el.options.length; i++) {
+        const optText = el.options[i].text.trim().toLowerCase();
+        if (optText.includes('5') && (optText.includes('gpa') || optText.includes('scale') || optText.includes('out of'))) {
+          el.selectedIndex = i;
+          triggerSelectEvents(el);
+          return true;
+        }
+      }
+    }
+
+    // 5. Duration (e.g. "4 Years", "04 Years", "4", "4 Year")
+    const durationMatch = targetStr.match(/\b([1-5])\b/);
+    if (durationMatch && (targetStr.includes('year') || targetStr.length <= 2)) {
+      const num = durationMatch[1];
+      for (let i = 0; i < el.options.length; i++) {
+        const optText = el.options[i].text.trim().toLowerCase();
+        const optVal = el.options[i].value.trim();
+        if (optVal === num || optVal === '0' + num || (optText.includes(num) && optText.includes('year'))) {
+          el.selectedIndex = i;
+          triggerSelectEvents(el);
+          return true;
+        }
+      }
+    }
+
+    // 6. Substring / contains match
     for (let i = 0; i < el.options.length; i++) {
       const optText = el.options[i].text.trim().toLowerCase();
       if (optText.length > 2 && (optText.includes(targetStr) || targetStr.includes(optText))) {
         el.selectedIndex = i;
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-        el.classList.add('tff-field-filled');
+        triggerSelectEvents(el);
         return true;
+      }
+    }
+
+    // 7. Token-based word match (for university/subject names)
+    const targetTokens = targetStr.replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(t => t.length > 2 && t !== 'and' && t !== 'the');
+    if (targetTokens.length > 0) {
+      for (let i = 0; i < el.options.length; i++) {
+        const optText = el.options[i].text.trim().toLowerCase();
+        const matchAll = targetTokens.every(token => optText.includes(token));
+        if (matchAll) {
+          el.selectedIndex = i;
+          triggerSelectEvents(el);
+          return true;
+        }
       }
     }
 
     return false;
   }
 
-  // Poll for AJAX Upazila dropdown options
-  async function waitForUpazilaOptions(idOrName, timeoutMs = 3000) {
+  function triggerSelectEvents(el) {
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    if (typeof el.onchange === 'function') {
+      try { el.onchange(); } catch(e) {}
+    }
+    el.classList.add('tff-field-filled');
+  }
+
+  // Poll for AJAX dropdown options (Upazila, subjects, etc.)
+  async function waitForDropdownOptions(idOrName, timeoutMs = 3000) {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
       const el = document.getElementById(idOrName) || document.querySelector(`[name="${idOrName}"]`);
@@ -522,10 +1029,13 @@
 
   // Focus and highlight Captcha field
   function focusCaptchaField() {
-    const captchaEl = document.getElementById('captcha') ||
+    const captchaEl = document.getElementById('validation') ||
+                      document.getElementById('captcha') ||
+                      document.querySelector('[name="validation"]') ||
                       document.querySelector('[name="validation_code"]') ||
                       document.querySelector('[name="captcha"]') ||
-                      document.querySelector('input[type="text"][placeholder*="captcha" i]');
+                      document.querySelector('input[type="text"][placeholder*="captcha" i]') ||
+                      document.querySelector('input[type="text"][placeholder*="validation" i]');
 
     if (captchaEl) {
       captchaEl.scrollIntoView({ behavior: 'smooth', block: 'center' });

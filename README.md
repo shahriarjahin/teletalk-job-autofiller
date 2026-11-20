@@ -15,6 +15,7 @@ Apply to government circulars in **under 3 seconds** without manually typing you
 ## 🚀 Key Features
 
 - **⚡ 1-Click Complete Auto-Fill**: Automatically fills 40+ form fields in less than a second.
+- **🏛️ Dual-Engine Support (Modern & BPSC Classic)**: Automatically detects both modern Teletalk circulars (`fri`, `dgfood`, `dpe`, `alljobs`) and classic BPSC Non-Cadre portals (`bpsc.teletalk.com.bd/ncad/`), adapting to legacy split-DOB selects, BPSC GPA boxes, and BPSC AJAX thana loaders.
 - **⌨️ Keyboard Shortcut (`Alt + A`)**: Press `Alt + A` on any Teletalk job page to fill the application instantly.
 - **🏷️ Floating In-Page Action Bar**: Non-intrusive floating pill `[⚡ Auto-Fill Application (Alt+A)]` and `[💾 Save Form]` directly on the page.
 - **🧠 Smart Dynamic Upazila Resolver**: Detects Teletalk's asynchronous District AJAX requests and intelligently selects the correct Upazila / Thana after the dropdown populates.
